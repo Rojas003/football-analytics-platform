@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Team Defense Stats{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="margin: 0;">🛡️ Team Defense Statistics</h1>
+        {% if current_user.is_analyst() %}
+        <div>
+            <a href="/import_team_defense" class="btn" style="background: #28a745;">
+                📥 Import Defense Stats
+            </a>
+            <a href="/add_team_defense" class="btn btn-secondary">
+                ✏️ Manual Entry
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if not grouped_stats %}
+    <div style="background: #fff3cd; padding: 30px; border-radius: 10px; text-align: center;">
+        <h3>📊 No Team Defense Stats Yet</h3>
+        <p style="margin: 20px 0;">Import defensive statistics to start analyzing matchups!</p>
+        {% if current_user.is_analyst() %}
+        <a href="/import_team_defense" class="btn" style="background: #28a745; margin-right: 10px;">
+            📥 Import Stats Now
+        </a>
+        <a href="/add_team_defense" class="btn btn-secondary">Manual Entry</a>
+        {% endif %}
+    </div>
+    {% else %}
+        
+    {% for season_week, stats in grouped_stats.items() %}
+    <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <h2 style="margin-top: 0; color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px;">
+            {{ season_week }} ({{ stats|length }} teams)
+        </h2>
+        
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                    <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                        <th style="padding: 12px; text-align: left;">Team</th>
+                        <th style="padding: 12px; text-align: center;">Pass Def Rank</th>
+                        <th style="padding: 12px; text-align: center;">Pass Yds/G</th>
+                        <th style="padding: 12px; text-align: center;">Rush Def Rank</th>
+                        <th style="padding: 12px; text-align: center;">Rush Yds/G</th>
+                        <th style="padding: 12px; text-align: center;">Sacks</th>
+                        <th style="padding: 12px; text-align: center;">Pass TDs Allowed</th>
+                        <th style="padding: 12px; text-align: center;">Rush TDs Allowed</th>
+                        {% if current_user.is_analyst() %}
+                        <th style="padding: 12px; text-align: center;">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in stats|sort(attribute='pass_defense_rank') %}
+                    <tr style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 12px; font-weight: bold;">
+                            {{ stat.team_abbr }}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {% if stat.pass_defense_rank <= 10 %}
+                            <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; background: #d4edda; color: #155724;">
+                                #{{ stat.pass_defense_rank }}
+                            </span>
+                            {% elif stat.pass_defense_rank >= 23 %}
+                            <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; background: #f8d7da; color: #721c24;">
+                                #{{ stat.pass_defense_rank }}
+                            </span>
+                            {% else %}
+                            <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; background: #fff3cd; color: #856404;">
+                                #{{ stat.pass_defense_rank }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {{ "%.1f"|format(stat.pass_yards_allowed_per_game) }}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {% if stat.rush_defense_rank <= 10 %}
+                            <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; background: #d4edda; color: #155724;">
+                                #{{ stat.rush_defense_rank }}
+                            </span>
+                            {% elif stat.rush_defense_rank >= 23 %}
+                            <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; background: #f8d7da; color: #721c24;">
+                                #{{ stat.rush_defense_rank }}
+                            </span>
+                            {% else %}
+                            <span style="padding: 4px 10px; border-radius: 12px; font-weight: bold; background: #fff3cd; color: #856404;">
+                                #{{ stat.rush_defense_rank }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {{ "%.1f"|format(stat.rush_yards_allowed_per_game) }}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {{ stat.sacks }}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {{ stat.passing_tds_allowed }}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {{ stat.rushing_tds_allowed }}
+                        </td>
+                        {% if current_user.is_analyst() %}
+                        <td style="padding: 12px; text-align: center;">
+                            <a href="/edit_team_defense/{{ stat.id }}" style="color: #007bff; text-decoration: none; margin-right: 10px;">✏️</a>
+                            <a href="/delete_team_defense/{{ stat.id }}" 
+                               onclick="return confirm('Delete {{ stat.team_abbr }} defense stats?')" 
+                               style="color: #dc3545; text-decoration: none;">🗑️</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #e7f3ff; border-radius: 8px;">
+            <strong>📊 Legend:</strong>
+            <span style="margin-left: 20px;">
+                <span style="background: #d4edda; padding: 4px 8px; border-radius: 4px; margin-right: 10px;">Top 10</span>
+                <span style="background: #fff3cd; padding: 4px 8px; border-radius: 4px; margin-right: 10px;">Middle</span>
+                <span style="background: #f8d7da; padding: 4px 8px; border-radius: 4px;">Bottom 10</span>
+            </span>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% endif %}
+
+    <div style="margin-top: 30px;">
+        <a href="/" class="btn btn-secondary">← Back to Dashboard</a>
+    </div>
+
+</div>
+{% endblock %}

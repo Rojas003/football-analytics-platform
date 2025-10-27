@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} - Details{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <h2>{{ player.name }}</h2>
+        <p><strong>Team:</strong> {{ player.team }} | <strong>Position:</strong> {{ player.position }}</p>
+    </div>
+    <div>
+        {% if current_user.is_analyst() %}
+        <a href="/edit_player/{{ player.id }}" class="btn" style="background: #ffc107; margin-right: 10px;">✏️ Edit Player</a>
+        {% endif %}
+        {% if current_user.is_admin() %}
+        <form method="POST" action="/delete_player/{{ player.id }}" style="display: inline;" onsubmit="return confirm('⚠️ Are you sure you want to delete {{ player.name }}? This will delete ALL stats and life events!');">
+            <button type="submit" class="btn" style="background: #dc3545;">🗑️ Delete Player</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin: 20px 0;">
+    {% if current_user.is_analyst() %}
+    <a href="/add_stats/{{ player.id }}" class="btn">Add Game Stats</a>
+    <a href="/add_life_event/{{ player.id }}" class="btn">Add Life Event</a>
+    <button onclick="showImportForm()" class="btn" style="background: #28a745;">Import from API</button>
+    <a href="/add_upcoming_game/{{ player.id }}" class="btn" style="background: #17a2b8;">📅 Add Upcoming Game</a>
+    {% endif %}
+    <a href="/player_analytics/{{ player.id }}" class="btn" style="background: #17a2b8;">📊 View Analytics</a>
+    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<!-- Import from API Form (hidden by default) -->
+{% if current_user.is_analyst() %}
+<div id="import_form" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+    <h3>Import Stats from NFL Data API</h3>
+    <form method="POST" action="/api_fetch_stats/{{ player.id }}">
+        <div class="form-group">
+            <label for="nfl_player_id">Player ID (from API search):</label>
+            <input type="text" id="nfl_player_id" name="nfl_player_id" placeholder="e.g., 00-0037740" required>
+        </div>
+        <div class="form-group">
+            <label for="season">Season:</label>
+            <select id="season" name="season">
+                <option value="2025">2025 (Current - may not be available yet)</option>
+                <option value="2024" selected>2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+            </select>
+        </div>
+        <button type="submit" class="btn" style="background: #28a745;">Import Stats</button>
+        <button type="button" onclick="hideImportForm()" class="btn btn-secondary">Cancel</button>
+    </form>
+</div>
+
+<script>
+function showImportForm() {
+    document.getElementById('import_form').style.display = 'block';
+}
+function hideImportForm() {
+    document.getElementById('import_form').style.display = 'none';
+}
+</script>
+{% endif %}
+
+<h3>Life Events</h3>
+{% if life_events %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Description</th>
+                {% if current_user.is_analyst() %}
+                <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in life_events %}
+            <tr>
+                <td>{{ event.event_date }}</td>
+                <td>
+                    {% if event.event_type == 'positive' %}
+                        ✅ Positive
+                    {% else %}
+                        ❌ Negative
+                    {% endif %}
+                </td>
+                <td>{{ event.event_category }}</td>
+                <td>{{ event.event_description }}</td>
+                {% if current_user.is_analyst() %}
+                <td>
+                    <a href="/edit_life_event/{{ event.id }}" class="btn" style="padding: 8px 16px; font-size: 14px;">Edit</a>
+                    {% if current_user.is_admin() %}
+                    <form method="POST" action="/delete_life_event/{{ event.id }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this life event?');">
+                        <button type="submit" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px; background: #dc3545;">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No life events recorded yet.</p>
+{% endif %}
+
+<h3 style="margin-top: 40px;">Game Statistics</h3>
+{% if stats %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                {% if player.position == 'QB' %}
+                    <th>Comp/Att</th>
+                    <th>Pass Yds</th>
+                    <th>Pass TD</th>
+                    <th>INT</th>
+                    <th>Rush Yds</th>
+                    <th>Rush TD</th>
+                {% elif player.position == 'RB' %}
+                    <th>Carries</th>
+                    <th>Rush Yds</th>
+                    <th>Rush TD</th>
+                    <th>Targets</th>
+                    <th>Rec</th>
+                    <th>Rec Yds</th>
+                    <th>Rec TD</th>
+                {% elif player.position in ['WR', 'TE'] %}
+                    <th>Targets</th>
+                    <th>Receptions</th>
+                    <th>Rec Yards</th>
+                    <th>Rec TD</th>
+                {% endif %}
+                <th>Fumbles</th>
+                <th>Fantasy Pts</th>
+                {% if current_user.is_analyst() %}
+                <th>Actions</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for stat in stats %}
+            <tr>
+                <td>{{ stat.game_date }}</td>
+                {% if player.position == 'QB' %}
+                    <td>{{ stat.completions }}/{{ stat.pass_attempts }}</td>
+                    <td>{{ stat.passing_yards }}</td>
+                    <td>{{ stat.passing_tds }}</td>
+                    <td>{{ stat.interceptions }}</td>
+                    <td>{{ stat.rushing_yards }}</td>
+                    <td>{{ stat.rushing_tds }}</td>
+                {% elif player.position == 'RB' %}
+                    <td>{{ stat.carries }}</td>
+                    <td>{{ stat.rushing_yards }}</td>
+                    <td>{{ stat.rushing_tds }}</td>
+                    <td>{{ stat.targets }}</td>
+                    <td>{{ stat.receptions }}</td>
+                    <td>{{ stat.receiving_yards }}</td>
+                    <td>{{ stat.receiving_tds }}</td>
+                {% elif player.position in ['WR', 'TE'] %}
+                    <td>{{ stat.targets }}</td>
+                    <td>{{ stat.receptions }}</td>
+                    <td>{{ stat.receiving_yards }}</td>
+                    <td>{{ stat.receiving_tds }}</td>
+                {% endif %}
+                <td>{{ stat.fumbles }}</td>
+                <td>{{ stat.fantasy_points }}</td>
+                {% if current_user.is_analyst() %}
+                <td>
+                    <a href="/edit_stats/{{ stat.id }}" class="btn" style="padding: 8px 16px; font-size: 14px;">Edit</a>
+                    {% if current_user.is_admin() %}
+                    <form method="POST" action="/delete_stats/{{ stat.id }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete these stats?');">
+                        <button type="submit" class="btn btn-secondary" style="padding: 8px 16px; font-size: 14px; background: #dc3545;">Delete</button>
+                    </form>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No statistics recorded yet.</p>
+{% endif %}
+{% endblock %}

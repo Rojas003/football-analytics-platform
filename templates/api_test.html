@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}API Test - NFL Data{% endblock %}
+
+{% block content %}
+<h2>NFL Data API Test</h2>
+
+<div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+    <h3>Search for a Player</h3>
+    <p>Search for NFL players using nfl-data-py. Includes current 2025 season data!</p>
+    
+    <div class="form-group">
+        <label for="player_search">Player Name:</label>
+        <input type="text" id="player_search" placeholder="e.g., Garrett Wilson" style="width: 300px;">
+    </div>
+    
+    <button onclick="searchPlayer()" class="btn">Search Player</button>
+</div>
+
+<div id="search_results" style="margin-top: 20px;"></div>
+
+<script>
+async function searchPlayer() {
+    const playerName = document.getElementById('player_search').value;
+    
+    if (!playerName) {
+        alert('Please enter a player name');
+        return;
+    }
+    
+    const resultsDiv = document.getElementById('search_results');
+    resultsDiv.innerHTML = '<p>Searching...</p>';
+    
+    try {
+        const formData = new FormData();
+        formData.append('player_name', playerName);
+        
+        const response = await fetch('/api_search_player', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            resultsDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+            return;
+        }
+        
+        if (data.players.length === 0) {
+            resultsDiv.innerHTML = '<p>No players found.</p>';
+            return;
+        }
+        
+        let html = '<h3>Search Results:</h3><table><thead><tr><th>Name</th><th>Team</th><th>Position</th><th>Jersey</th><th>Player ID</th></tr></thead><tbody>';
+        
+        data.players.forEach(player => {
+            html += `
+                <tr>
+                    <td>${player.name}</td>
+                    <td>${player.team}</td>
+                    <td>${player.position}</td>
+                    <td>#${player.jersey_number}</td>
+                    <td>${player.player_id}</td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table>';
+        html += '<p style="margin-top: 20px;"><strong>Note:</strong> You can use the Player ID to fetch game logs for these players.</p>';
+        
+        resultsDiv.innerHTML = html;
+        
+    } catch (error) {
+        resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+    }
+}
+</script>
+
+<div style="margin-top: 40px;">
+    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+{% endblock %}

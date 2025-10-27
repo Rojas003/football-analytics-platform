@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - {{ player.name }}{% endblock %}
+
+{% block content %}
+<h2>🎯 Betting Analytics: {{ player.name }}</h2>
+<p><strong>Team:</strong> {{ player.team }} | <strong>Position:</strong> {{ player.position }}</p>
+
+<!-- UPCOMING GAME PREDICTIONS -->
+{% if upcoming_predictions %}
+{% for pred_data in upcoming_predictions %}
+<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 15px; margin: 30px 0; box-shadow: 0 8px 20px rgba(0,0,0,0.3);">
+    <h2 style="color: white; margin-bottom: 5px;">🎯 {{ pred_data.game.season }} GAME PREDICTION</h2>
+    <p style="opacity: 0.85; font-size: 0.9em; margin-bottom: 20px; font-style: italic;">
+        📊 Baseline: {{ player.name }}'s 2024 season performance ({{ stats|length }} games) | 
+        🛡️ Defense: 2024 rankings | 
+        ⚠️ Projections will improve as 2025 data becomes available
+    </p>
+        
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px;">
+        <!-- Game Info -->
+        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px;">
+            <h3 style="color: white; margin-bottom: 15px;">Game Details</h3>
+            <p style="margin: 8px 0;"><strong>📅 Date:</strong> {{ pred_data.game.game_date.strftime('%A, %B %d, %Y') }}</p>
+            <p style="margin: 8px 0;"><strong>🏟️ Opponent:</strong> {{ pred_data.game.opponent }}</p>
+            <p style="margin: 8px 0;"><strong>📍 Location:</strong> {{ pred_data.game.home_away }}</p>
+            <p style="margin: 8px 0;"><strong>📺 Week:</strong> {{ pred_data.game.week }}</p>
+            
+            {% if pred_data.game.prop_receiving_yards or pred_data.game.prop_rush_yards %}
+            <hr style="border: 1px solid rgba(255,255,255,0.3); margin: 15px 0;">
+            <h4 style="color: white; margin-bottom: 10px;">Betting Lines:</h4>
+            {% if pred_data.game.prop_receiving_yards %}
+            <p style="margin: 5px 0;">Rec Yards: <strong>{{ pred_data.game.prop_receiving_yards }}</strong></p>
+            {% endif %}
+            {% if pred_data.game.prop_receptions %}
+            <p style="margin: 5px 0;">Receptions: <strong>{{ pred_data.game.prop_receptions }}</strong></p>
+            {% endif %}
+            {% if pred_data.game.prop_rush_yards %}
+            <p style="margin: 5px 0;">Rush Yards: <strong>{{ pred_data.game.prop_rush_yards }}</strong></p>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        <!-- Prediction -->
+        <div>
+            <div style="background: rgba(255,255,255,0.15); padding: 25px; border-radius: 10px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;">
+                    <div>
+                        <div style="font-size: 2em; font-weight: bold;">{{ pred_data.prediction.base_projection }}</div>
+                        <div style="font-size: 0.85em; opacity: 0.9;">Season Avg</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2em; font-weight: bold;">
+                            {% if pred_data.prediction.event_adjustment > 0 %}+{% endif %}{{ pred_data.prediction.event_adjustment|round(1) }}
+                        </div>
+                        <div style="font-size: 0.85em; opacity: 0.9;">Event Impact</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 2em; font-weight: bold;">
+                            {% if pred_data.prediction.opponent_adjustment > 0 %}+{% endif %}{{ pred_data.prediction.opponent_adjustment|round(1) }}
+                        </div>
+                        <div style="font-size: 0.85em; opacity: 0.9;">Matchup</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 10px;">
+                        <div style="font-size: 2.5em; font-weight: bold;">{{ pred_data.prediction.final_projection }}</div>
+                        <div style="font-size: 0.85em; opacity: 0.9;">PROJECTION</div>
+                    </div>
+                </div>
+            </div>
+            
+<!-- Recommendation -->
+{% if 'STRONG OVER' in pred_data.prediction.recommendation %}
+    <div style="background: #28a745; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+        <div style="font-size: 2em; font-weight: bold; color: white;">
+            {{ pred_data.prediction.recommendation }}
+        </div>
+        <div style="font-size: 0.9em; margin-top: 5px; color: white; opacity: 0.9;">
+            Confidence: {{ pred_data.prediction.confidence }}%
+        </div>
+    </div>
+{% elif 'LEAN OVER' in pred_data.prediction.recommendation %}
+    <div style="background: #ffc107; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+        <div style="font-size: 2em; font-weight: bold; color: #000;">
+            {{ pred_data.prediction.recommendation }}
+        </div>
+        <div style="font-size: 0.9em; margin-top: 5px; color: #333;">
+            Confidence: {{ pred_data.prediction.confidence }}%
+        </div>
+    </div>
+{% elif 'STRONG UNDER' in pred_data.prediction.recommendation %}
+    <div style="background: #dc3545; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+        <div style="font-size: 2em; font-weight: bold; color: white;">
+            {{ pred_data.prediction.recommendation }}
+        </div>
+        <div style="font-size: 0.9em; margin-top: 5px; color: white; opacity: 0.9;">
+            Confidence: {{ pred_data.prediction.confidence }}%
+        </div>
+    </div>
+{% elif 'LEAN UNDER' in pred_data.prediction.recommendation %}
+    <div style="background: #fd7e14; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+        <div style="font-size: 2em; font-weight: bold; color: #000;">
+            {{ pred_data.prediction.recommendation }}
+        </div>
+        <div style="font-size: 0.9em; margin-top: 5px; color: #333;">
+            Confidence: {{ pred_data.prediction.confidence }}%
+        </div>
+    </div>
+{% else %}
+    <div style="background: #6c757d; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+        <div style="font-size: 2em; font-weight: bold; color: white;">
+            {{ pred_data.prediction.recommendation }}
+        </div>
+        <div style="font-size: 0.9em; margin-top: 5px; color: white; opacity: 0.9;">
+            Confidence: {{ pred_data.prediction.confidence }}%
+        </div>
+    </div>
+{% endif %}        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- BETTING INSIGHTS DASHBOARD -->
+{% if betting_insights %}
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin: 30px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <h3 style="color: white; margin-bottom: 20px;">💰 Betting Insights Dashboard</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 2.5em; font-weight: bold;">{{ betting_insights.improved_pct }}%</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">Performance Improvement Rate</div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 2.5em; font-weight: bold;">{{ betting_insights.avg_fp_change }}</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">Avg Fantasy Points Change</div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 2.5em; font-weight: bold;">{{ betting_insights.avg_yd_change }}</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">Avg Receiving Yards Change</div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 2.5em; font-weight: bold;">{{ betting_insights.total_events }}</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">Life Events Tracked</div>
+        </div>
+    </div>
+    
+    {% if betting_insights.positive_events_count > 0 or betting_insights.negative_events_count > 0 %}
+    <div style="margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="background: rgba(40, 167, 69, 0.3); padding: 15px; border-radius: 10px;">
+            <strong>✅ Positive Events ({{ betting_insights.positive_events_count }})</strong><br>
+            Average Impact: <span style="font-size: 1.3em; font-weight: bold;">{{ betting_insights.positive_avg_change }} pts</span>
+        </div>
+        <div style="background: rgba(220, 53, 69, 0.3); padding: 15px; border-radius: 10px;">
+            <strong>❌ Negative Events ({{ betting_insights.negative_events_count }})</strong><br>
+            Average Impact: <span style="font-size: 1.3em; font-weight: bold;">{{ betting_insights.negative_avg_change }} pts</span>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- SEASON VS EVENT COMPARISON -->
+{% if season_comparison %}
+<div style="background: white; padding: 25px; border-radius: 10px; margin: 30px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h3>📊 Season Average vs. Near Event Performance (7-Day Window)</h3>
+    <p style="color: #666; margin-bottom: 20px;">Comparing player's season averages to performance within 7 days of life events</p>
+    
+    <table style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Stat Category</th>
+                <th>Season Avg</th>
+                <th>Near Events Avg</th>
+                <th>Difference</th>
+                <th>% Change</th>
+                <th>Betting Edge</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Fantasy Points</strong></td>
+                <td>{{ season_comparison.fantasy_points.season }}</td>
+                <td>{{ season_comparison.fantasy_points.near_events }}</td>
+                <td {% if season_comparison.fantasy_points.diff > 0 %}style="color: green"{% else %}style="color: red"{% endif %}>
+                    {{ season_comparison.fantasy_points.diff }}
+                </td>
+                <td {% if season_comparison.fantasy_points.diff_pct > 0 %}style="color: green; font-weight: bold;"{% else %}style="color: red; font-weight: bold;"{% endif %}>
+                    {{ season_comparison.fantasy_points.diff_pct }}%
+                </td>
+                <td>
+                    {% if season_comparison.fantasy_points.diff_pct > 10 %}
+                        <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">🔥 STRONG</span>
+                    {% elif season_comparison.fantasy_points.diff_pct > 5 %}
+                        <span style="background: #ffc107; color: black; padding: 5px 10px; border-radius: 5px; font-size: 12px;">⚡ MODERATE</span>
+                    {% else %}
+                        <span style="background: #6c757d; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">WEAK</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Receiving Yards</strong></td>
+                <td>{{ season_comparison.receiving_yards.season }}</td>
+                <td>{{ season_comparison.receiving_yards.near_events }}</td>
+                <td {% if season_comparison.receiving_yards.diff > 0 %}style="color: green"{% else %}style="color: red"{% endif %}>
+                    {{ season_comparison.receiving_yards.diff }}
+                </td>
+                <td {% if season_comparison.receiving_yards.diff_pct > 0 %}style="color: green; font-weight: bold;"{% else %}style="color: red; font-weight: bold;"{% endif %}>
+                    {{ season_comparison.receiving_yards.diff_pct }}%
+                </td>
+                <td>
+                    {% if season_comparison.receiving_yards.diff_pct > 15 %}
+                        <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">🔥 STRONG</span>
+                    {% elif season_comparison.receiving_yards.diff_pct > 8 %}
+                        <span style="background: #ffc107; color: black; padding: 5px 10px; border-radius: 5px; font-size: 12px;">⚡ MODERATE</span>
+                    {% else %}
+                        <span style="background: #6c757d; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">WEAK</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Receptions</strong></td>
+                <td>{{ season_comparison.receptions.season }}</td>
+                <td>{{ season_comparison.receptions.near_events }}</td>
+                <td {% if season_comparison.receptions.diff > 0 %}style="color: green"{% else %}style="color: red"{% endif %}>
+                    {{ season_comparison.receptions.diff }}
+                </td>
+                <td {% if season_comparison.receptions.diff_pct > 0 %}style="color: green; font-weight: bold;"{% else %}style="color: red; font-weight: bold;"{% endif %}>
+                    {{ season_comparison.receptions.diff_pct }}%
+                </td>
+                <td>
+                    {% if season_comparison.receptions.diff_pct > 15 %}
+                        <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">🔥 STRONG</span>
+                    {% elif season_comparison.receptions.diff_pct > 8 %}
+                        <span style="background: #ffc107; color: black; padding: 5px 10px; border-radius: 5px; font-size: 12px;">⚡ MODERATE</span>
+                    {% else %}
+                        <span style="background: #6c757d; color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px;">WEAK</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- EVENT PROXIMITY ANALYSIS -->
+{% if proximity_analysis %}
+<div style="background: #f8f9fa; padding: 25px; border-radius: 10px; margin: 30px 0;">
+    <h3>📅 Event Proximity Analysis</h3>
+    <p style="color: #666; margin-bottom: 20px;">Performance breakdown by distance from life events</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+        {% if proximity_analysis['7_day'] %}
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h4 style="color: #667eea; margin-bottom: 15px;">7-Day Window</h4>
+            <p><strong>Games:</strong> {{ proximity_analysis['7_day'].count }}</p>
+            <p><strong>Avg Fantasy Pts:</strong> {{ proximity_analysis['7_day'].avg_fantasy|round(1) }}</p>
+            <p><strong>Avg Rec Yards:</strong> {{ proximity_analysis['7_day'].avg_rec_yards|round(1) }}</p>
+            <p><strong>Avg Receptions:</strong> {{ proximity_analysis['7_day'].avg_receptions|round(1) }}</p>
+            <p><strong>Avg TDs:</strong> {{ proximity_analysis['7_day'].avg_tds|round(2) }}</p>
+        </div>
+        {% endif %}
+        
+        {% if proximity_analysis['14_day'] %}
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h4 style="color: #764ba2; margin-bottom: 15px;">14-Day Window</h4>
+            <p><strong>Games:</strong> {{ proximity_analysis['14_day'].count }}</p>
+            <p><strong>Avg Fantasy Pts:</strong> {{ proximity_analysis['14_day'].avg_fantasy|round(1) }}</p>
+            <p><strong>Avg Rec Yards:</strong> {{ proximity_analysis['14_day'].avg_rec_yards|round(1) }}</p>
+            <p><strong>Avg Receptions:</strong> {{ proximity_analysis['14_day'].avg_receptions|round(1) }}</p>
+            <p><strong>Avg TDs:</strong> {{ proximity_analysis['14_day'].avg_tds|round(2) }}</p>
+        </div>
+        {% endif %}
+        
+        {% if proximity_analysis['30_day'] %}
+        <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h4 style="color: #f093fb; margin-bottom: 15px;">30-Day Window</h4>
+            <p><strong>Games:</strong> {{ proximity_analysis['30_day'].count }}</p>
+            <p><strong>Avg Fantasy Pts:</strong> {{ proximity_analysis['30_day'].avg_fantasy|round(1) }}</p>
+            <p><strong>Avg Rec Yards:</strong> {{ proximity_analysis['30_day'].avg_rec_yards|round(1) }}</p>
+            <p><strong>Avg Receptions:</strong> {{ proximity_analysis['30_day'].avg_receptions|round(1) }}</p>
+            <p><strong>Avg TDs:</strong> {{ proximity_analysis['30_day'].avg_tds|round(2) }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- RECENT FORM TRACKER -->
+{% if recent_form %}
+<div style="background: white; padding: 25px; border-radius: 10px; margin: 30px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <h3>🔥 Recent Form (Last 5 Games)</h3>
+    
+    <table style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Fantasy Pts</th>
+                <th>Rec Yards</th>
+                <th>Receptions</th>
+                <th>TDs</th>
+                <th>Form</th>
+                <th>Event Proximity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game in recent_form %}
+            <tr {% if game.near_event %}style="background: #fff3cd"{% endif %}>
+                <td>{{ game.date }}</td>
+                <td style="font-weight: bold;">{{ game.fantasy_points }}</td>
+                <td>{{ game.receiving_yards }}</td>
+                <td>{{ game.receptions }}</td>
+                <td>{{ game.tds }}</td>
+                <td>
+                    {% if game.above_avg %}
+                        <span style="color: green; font-weight: bold;">📈 ABOVE AVG</span>
+                    {% else %}
+                        <span style="color: #999;">📉 Below Avg</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.near_event %}
+                        {% if game.near_event.type == 'positive' %}
+                            <span style="background: #d4edda; padding: 5px 10px; border-radius: 5px; font-size: 12px;">
+                                ✅ {{ game.near_event.category }} ({{ game.near_event.days_away }}d away)
+                            </span>
+                        {% else %}
+                            <span style="background: #f8d7da; padding: 5px 10px; border-radius: 5px; font-size: 12px;">
+                                ❌ {{ game.near_event.category }} ({{ game.near_event.days_away }}d away)
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- DETAILED EVENT ANALYSIS -->
+{% if event_analysis %}
+<h3 style="margin-top: 40px;">📋 Detailed Life Event Impact Analysis</h3>
+<p style="margin-bottom: 20px;">Comparing performance 3 games before and after each life event</p>
+
+<table style="margin-top: 20px;">
+    <thead>
+        <tr>
+            <th>Event Date</th>
+            <th>Type</th>
+            <th>Category</th>
+            <th>Stat</th>
+            <th>Before</th>
+            <th>After</th>
+            <th>Change</th>
+            <th>% Change</th>
+            <th>Sample</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for analysis in event_analysis %}
+            {% set row_count = analysis.changes|length %}
+            {% for stat_name, stat_data in analysis.changes.items() %}
+            <tr>
+                {% if loop.first %}
+                <td rowspan="{{ row_count }}">{{ analysis.event.event_date }}</td>
+                <td rowspan="{{ row_count }}">
+                    {% if analysis.event.event_type == 'positive' %}
+                        <span style="background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 5px; font-size: 12px;">✅ Positive</span>
+                    {% else %}
+                        <span style="background: #f8d7da; color: #721c24; padding: 5px 10px; border-radius: 5px; font-size: 12px;">❌ Negative</span>
+                    {% endif %}
+                </td>
+                <td rowspan="{{ row_count }}">{{ analysis.event.event_category }}</td>
+                {% endif %}
+                <td><strong>{{ stat_name.replace('_', ' ').title() }}</strong></td>
+                <td>{{ stat_data.before }}</td>
+                <td>{{ stat_data.after }}</td>
+                <td {% if stat_data.change > 0 %}style="color: green; font-weight: bold;"{% else %}style="color: red; font-weight: bold;"{% endif %}>
+                    {{ stat_data.change }}
+                </td>
+                <td {% if stat_data.change_pct > 0 %}style="color: green; font-weight: bold;"{% else %}style="color: red; font-weight: bold;"{% endif %}>
+                    {{ stat_data.change_pct }}%
+                </td>
+                {% if loop.first %}
+                <td rowspan="{{ row_count }}" style="font-size: 12px; color: #666;">{{ analysis.sample_size }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <p><strong>Not enough data for impact analysis.</strong> Need at least 3 games before and after life events.</p>
+</div>
+{% endif %}
+
+<!-- MULTI-STAT PERFORMANCE CHART -->
+<h3 style="margin-top: 40px;">📈 Multi-Stat Performance Timeline</h3>
+<div style="position: relative; height: 400px; margin-top: 20px;">
+    <canvas id="multiStatChart"></canvas>
+</div>
+
+<!-- RECEIVING YARDS CHART -->
+<h3 style="margin-top: 40px;">📊 Receiving Yards Timeline (Prop Focus)</h3>
+<div style="position: relative; height: 350px; margin-top: 20px;">
+    <canvas id="receivingChart"></canvas>
+</div>
+
+<!-- Embed data in a data attribute -->
+<div id="chartDataContainer" 
+     data-chart-info="{{ chart_data|tojson|safe|escape }}" 
+     style="display: none;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dataContainer = document.getElementById('chartDataContainer');
+    const chartDataStr = dataContainer.getAttribute('data-chart-info');
+    const chartData = JSON.parse(chartDataStr);
+    
+    const dates = chartData.dates || [];
+    const fantasyPoints = chartData.fantasy_points || [];
+    const receivingYards = chartData.receiving_yards || [];
+    const receptions = chartData.receptions || [];
+    const touchdowns = chartData.touchdowns || [];
+    const targets = chartData.targets || [];
+    const eventDates = chartData.event_dates || [];
+    const eventTypes = chartData.event_types || [];
+    const eventDescriptions = chartData.event_descriptions || [];
+
+    if (dates.length === 0) {
+        document.getElementById('multiStatChart').parentElement.innerHTML = 
+            '<p style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 5px;">No performance data available.</p>';
+        return;
+    }
+
+    // Multi-stat chart
+    const ctx1 = document.getElementById('multiStatChart').getContext('2d');
+    new Chart(ctx1, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Fantasy Points',
+                    data: fantasyPoints,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Receptions',
+                    data: receptions,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'TDs',
+                    data: touchdowns,
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Multi-Stat Performance Comparison',
+                    font: { size: 16 }
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const date = context.label;
+                            const eventIdx = eventDates.indexOf(date);
+                            if (eventIdx !== -1) {
+                                return '📌 ' + eventDescriptions[eventIdx];
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: { display: true, text: 'Fantasy Points' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: { display: true, text: 'Receptions / TDs' },
+                    grid: { drawOnChartArea: false }
+                },
+                x: {
+                    title: { display: true, text: 'Game Date' },
+                    ticks: { maxRotation: 45, minRotation: 45 }
+                }
+            }
+        }
+    });
+
+    // Receiving yards chart
+    const ctx2 = document.getElementById('receivingChart').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Receiving Yards',
+                data: receivingYards,
+                backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                borderColor: '#667eea',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Receiving Yards by Game (For Prop Betting)',
+                    font: { size: 16 }
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const date = context.label;
+                            const eventIdx = eventDates.indexOf(date);
+                            if (eventIdx !== -1) {
+                                return '📌 ' + eventDescriptions[eventIdx];
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Yards' }
+                },
+                x: {
+                    title: { display: true, text: 'Game Date' },
+                    ticks: { maxRotation: 45, minRotation: 45 }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<div style="margin-top: 40px;">
+    <a href="/analytics" class="btn btn-secondary">Back to Analytics</a>
+    <a href="/player/{{ player.id }}" class="btn">View Player Profile</a>
+</div>
+{% endblock %}

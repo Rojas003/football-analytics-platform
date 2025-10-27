@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<h2>👥 User Management</h2>
+<p style="margin-bottom: 30px;">Manage user accounts and permissions.</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>
+                {{ user.username }}
+                {% if user.id == current_user.id %}
+                    <span style="color: #667eea; font-weight: bold;">(You)</span>
+                {% endif %}
+            </td>
+            <td>{{ user.email }}</td>
+            <td>
+                {% if user.role == 'admin' %}
+                    <span style="background: #dc3545; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">ADMIN</span>
+                {% elif user.role == 'analyst' %}
+                    <span style="background: #28a745; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">ANALYST</span>
+                {% else %}
+                    <span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold;">VIEWER</span>
+                {% endif %}
+            </td>
+            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('change_user_role', user_id=user.id) }}" style="display: inline-block;">
+                    <select name="role" style="padding: 5px; border-radius: 5px; border: 1px solid #ccc;">
+                        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                        <option value="analyst" {% if user.role == 'analyst' %}selected{% endif %}>Analyst</option>
+                        <option value="viewer" {% if user.role == 'viewer' %}selected{% endif %}>Viewer</option>
+                    </select>
+                    <button type="submit" class="btn" style="padding: 5px 15px; font-size: 14px;">Update</button>
+                </form>
+                {% else %}
+                <span style="color: #999; font-size: 14px;">Cannot modify own role</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 40px; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+    <h3 style="margin-bottom: 15px;">Role Permissions</h3>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+        <div>
+            <h4 style="color: #dc3545; margin-bottom: 10px;">👑 Admin</h4>
+            <ul style="list-style-position: inside; font-size: 14px; line-height: 1.8;">
+                <li>Full system access</li>
+                <li>Manage users & roles</li>
+                <li>Delete any data</li>
+                <li>View audit logs</li>
+            </ul>
+        </div>
+        <div>
+            <h4 style="color: #28a745; margin-bottom: 10px;">📊 Analyst</h4>
+            <ul style="list-style-position: inside; font-size: 14px; line-height: 1.8;">
+                <li>Add/edit players</li>
+                <li>Add/edit stats</li>
+                <li>Add/edit life events</li>
+                <li>View analytics</li>
+            </ul>
+        </div>
+        <div>
+            <h4 style="color: #6c757d; margin-bottom: 10px;">👁️ Viewer</h4>
+            <ul style="list-style-position: inside; font-size: 14px; line-height: 1.8;">
+                <li>View players</li>
+                <li>View statistics</li>
+                <li>View analytics</li>
+                <li>Read-only access</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 30px;">
+    <a href="/" class="btn btn-secondary">Back to Dashboard</a>
+    <a href="{{ url_for('audit_logs') }}" class="btn">View Audit Logs</a>
+</div>
+{% endblock %}

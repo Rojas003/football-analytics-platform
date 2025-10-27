@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Add Stats for {{ player.name }}{% endblock %}
+
+{% block content %}
+<h2>Add Game Statistics</h2>
+<h3>Player: {{ player.name }} ({{ player.team }}) - {{ player.position }}</h3>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="game_date">Game Date:</label>
+        <input type="date" id="game_date" name="game_date" required>
+    </div>
+    
+    {% if player.position == 'QB' %}
+    <!-- QB Specific Stats -->
+    <h4>Passing Stats</h4>
+    <div class="form-group">
+        <label for="completions">Completions:</label>
+        <input type="number" id="completions" name="completions" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="pass_attempts">Pass Attempts:</label>
+        <input type="number" id="pass_attempts" name="pass_attempts" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="passing_yards">Passing Yards:</label>
+        <input type="number" id="passing_yards" name="passing_yards" value="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="passing_tds">Passing Touchdowns:</label>
+        <input type="number" id="passing_tds" name="passing_tds" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="interceptions">Interceptions:</label>
+        <input type="number" id="interceptions" name="interceptions" value="0" min="0">
+    </div>
+    
+    <h4>Rushing Stats</h4>
+    <div class="form-group">
+        <label for="carries">Carries:</label>
+        <input type="number" id="carries" name="carries" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="rushing_yards">Rushing Yards:</label>
+        <input type="number" id="rushing_yards" name="rushing_yards" value="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="rushing_tds">Rushing Touchdowns:</label>
+        <input type="number" id="rushing_tds" name="rushing_tds" value="0" min="0">
+    </div>
+    
+    {% elif player.position == 'RB' %}
+    <!-- RB Specific Stats -->
+    <h4>Rushing Stats</h4>
+    <div class="form-group">
+        <label for="carries">Carries:</label>
+        <input type="number" id="carries" name="carries" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="rushing_yards">Rushing Yards:</label>
+        <input type="number" id="rushing_yards" name="rushing_yards" value="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="rushing_tds">Rushing Touchdowns:</label>
+        <input type="number" id="rushing_tds" name="rushing_tds" value="0" min="0">
+    </div>
+    
+    <h4>Receiving Stats</h4>
+    <div class="form-group">
+        <label for="targets">Targets:</label>
+        <input type="number" id="targets" name="targets" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="receptions">Receptions:</label>
+        <input type="number" id="receptions" name="receptions" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="receiving_yards">Receiving Yards:</label>
+        <input type="number" id="receiving_yards" name="receiving_yards" value="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="receiving_tds">Receiving Touchdowns:</label>
+        <input type="number" id="receiving_tds" name="receiving_tds" value="0" min="0">
+    </div>
+    
+    {% elif player.position in ['WR', 'TE'] %}
+    <!-- WR/TE Specific Stats -->
+    <h4>Receiving Stats</h4>
+    <div class="form-group">
+        <label for="targets">Targets:</label>
+        <input type="number" id="targets" name="targets" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="receptions">Receptions:</label>
+        <input type="number" id="receptions" name="receptions" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="receiving_yards">Receiving Yards:</label>
+        <input type="number" id="receiving_yards" name="receiving_yards" value="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="receiving_tds">Receiving Touchdowns:</label>
+        <input type="number" id="receiving_tds" name="receiving_tds" value="0" min="0">
+    </div>
+    
+    {% endif %}
+    
+    <!-- Universal Stats -->
+    <h4>Additional Stats</h4>
+    <div class="form-group">
+        <label for="fumbles">Fumbles:</label>
+        <input type="number" id="fumbles" name="fumbles" value="0" min="0">
+    </div>
+    
+    <div class="form-group">
+        <label for="fantasy_points">Fantasy Points:</label>
+        <input type="number" id="fantasy_points" name="fantasy_points" step="0.1" value="0" min="0">
+    </div>
+    
+    <button type="submit" class="btn">Add Stats</button>
+    <a href="/player/{{ player.id }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

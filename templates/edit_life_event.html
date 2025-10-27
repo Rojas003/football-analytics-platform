@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Life Event for {{ player.name }}{% endblock %}
+
+{% block content %}
+<h2>Edit Life Event</h2>
+<h3>Player: {{ player.name }} ({{ player.team }})</h3>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="event_date">Event Date:</label>
+        <input type="date" id="event_date" name="event_date" value="{{ event.event_date }}" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="event_type">Event Type:</label>
+        <select id="event_type" name="event_type" required>
+            <option value="positive" {% if event.event_type == 'positive' %}selected{% endif %}>✅ Positive Event</option>
+            <option value="negative" {% if event.event_type == 'negative' %}selected{% endif %}>❌ Negative Event</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="event_category">Event Category:</label>
+        <select id="event_category" name="event_category" required>
+            <option value="Marriage" {% if event.event_category == 'Marriage' %}selected{% endif %}>Marriage</option>
+            <option value="Birth of Child" {% if event.event_category == 'Birth of Child' %}selected{% endif %}>Birth of Child</option>
+            <option value="Injury" {% if event.event_category == 'Injury' %}selected{% endif %}>Injury</option>
+            <option value="Family Death" {% if event.event_category == 'Family Death' %}selected{% endif %}>Family Death</option>
+            <option value="Award/Recognition" {% if event.event_category == 'Award/Recognition' %}selected{% endif %}>Award/Recognition</option>
+            <option value="Contract Signing" {% if event.event_category == 'Contract Signing' %}selected{% endif %}>Contract Signing</option>
+            <option value="Legal Issue" {% if event.event_category == 'Legal Issue' %}selected{% endif %}>Legal Issue</option>
+            <option value="Personal Milestone" {% if event.event_category == 'Personal Milestone' %}selected{% endif %}>Personal Milestone</option>
+            <option value="Other" {% if event.event_category == 'Other' %}selected{% endif %}>Other</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="event_description">Event Description:</label>
+        <textarea id="event_description" name="event_description" required>{{ event.event_description }}</textarea>
+    </div>
+    
+    <button type="submit" class="btn">Update Life Event</button>
+    <a href="/player/{{ player.id }}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

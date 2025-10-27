@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Add Player{% endblock %}
+
+{% block content %}
+<h2>Add New Player</h2>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="name">Player Name:</label>
+        <input type="text" id="name" name="name" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="team">Team:</label>
+        <input type="text" id="team" name="team" required>
+    </div>
+    
+    <div class="form-group">
+        <label for="position">Position:</label>
+        <select id="position" name="position" required>
+            <option value="">Select Position</option>
+            <option value="QB">Quarterback (QB)</option>
+            <option value="RB">Running Back (RB)</option>
+            <option value="WR">Wide Receiver (WR)</option>
+            <option value="TE">Tight End (TE)</option>
+            <option value="K">Kicker (K)</option>
+            <option value="DEF">Defense (DEF)</option>
+        </select>
+    </div>
+    
+    <button type="submit" class="btn">Add Player</button>
+    <a href="/" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Player - {{ player.name }}{% endblock %}
+
+{% block content %}
+<h2>Edit Player: {{ player.name }}</h2>
+
+<form method="POST" style="max-width: 600px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <div style="margin-bottom: 20px;">
+        <label for="name" style="display: block; margin-bottom: 8px; font-weight: 500;">Player Name *</label>
+        <input type="text" id="name" name="name" value="{{ player.name }}" required 
+               style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 15px;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="team" style="display: block; margin-bottom: 8px; font-weight: 500;">Team *</label>
+        <input type="text" id="team" name="team" value="{{ player.team }}" required
+               style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 15px;">
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+        <label for="position" style="display: block; margin-bottom: 8px; font-weight: 500;">Position *</label>
+        <select id="position" name="position" required
+                style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 5px; font-size: 15px;">
+            <option value="QB" {% if player.position == 'QB' %}selected{% endif %}>QB - Quarterback</option>
+            <option value="RB" {% if player.position == 'RB' %}selected{% endif %}>RB - Running Back</option>
+            <option value="WR" {% if player.position == 'WR' %}selected{% endif %}>WR - Wide Receiver</option>
+            <option value="TE" {% if player.position == 'TE' %}selected{% endif %}>TE - Tight End</option>
+            <option value="K" {% if player.position == 'K' %}selected{% endif %}>K - Kicker</option>
+            <option value="DEF" {% if player.position == 'DEF' %}selected{% endif %}>DEF - Defense</option>
+        </select>
+    </div>
+    
+    <div style="margin-top: 30px;">
+        <button type="submit" class="btn">Update Player</button>
+        <a href="/player/{{ player.id }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<div style="margin-top: 30px; max-width: 600px;">
+    <a href="/player/{{ player.id }}" class="btn btn-secondary">Back to Player Profile</a>
+</div>
+{% endblock %}
