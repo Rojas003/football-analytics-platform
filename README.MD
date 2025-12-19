@@ -4,100 +4,350 @@ A comprehensive analytics platform that analyzes the correlation between footbal
 
 ## Project Overview
 
-Traditional football analytics focus solely on on-field performance metrics, but this platform provides a holistic view by integrating personal life events (marriages, births, family issues, injuries) with statistical performance trends. The goal is to create more accurate performance predictions and uncover insights into how life events influence athletic performance.
+Traditional football analytics focus solely on on-field performance metrics, but this platform provides a holistic view by integrating personal life events (marriages, births, family issues, injuries) with statistical performance trends. The goal is to create more accurate performance predictions and uncover insights into how life events influence athletic performance, including the "dad strength" phenomenon observed in professional sports.
 
-## Current Status: Midterm Submission
+## Architecture: Multi-Container Microservices
 
-This repository contains the completed midterm implementation featuring a single-container architecture with core functionality.
+This application implements a **5-container microservices architecture** using Docker Compose for orchestration.
 
-### Completed Features
+### Container Architecture
 
-- **Containerized Application**: Docker container running Ubuntu base image
-- **Web Application**: Python Flask web application with responsive UI
-- **Database**: SQLite database for data persistence
-- **Player Statistics Dashboard**: Interface for viewing player performance trends
-- **Data Entry System**: Manual entry system for personal life events
-- **Correlation Analysis**: Basic statistical analysis between life events and performance metrics
-- **User Authentication**: Secure user authentication and session management
-- **Data Visualization**: Interactive charts and graphs for performance insights
+```
+┌──────────────┐
+│   Browser    │
+└──────┬───────┘
+       │
+       ▼
+┌─────────────────┐
+│  Web Container  │◄──────────┐
+│   (Flask:5001)  │           │
+└────────┬────────┘           │
+         │                    │
+    ┌────▼────┐          ┌────▼─────┐
+    │  Redis  │          │PostgreSQL│
+    │  Cache  │          │ Database │
+    └────┬────┘          └────┬─────┘
+         │                    │
+    ┌────▼────────────────────▼─────┐
+    │      Data Collector           │
+    │   (Background Service)        │
+    └────────────┬──────────────────┘
+                 │
+    ┌────────────▼──────────────────┐
+    │   Analytics Engine            │
+    │  (ML Correlation Analysis)    │
+    └───────────────────────────────┘
+```
+
+### Containers
+
+1. **PostgreSQL Database** (`football_db`)
+   - Persistent data storage
+   - Player information, game statistics, life events
+   - Correlation analysis results
+
+2. **Redis Cache** (`football_redis`)
+   - Session management
+   - Caching layer for performance
+   - Rate limiting infrastructure
+
+3. **Flask Web Application** (`football_web`)
+   - User interface and authentication
+   - Player management dashboard
+   - Analytics visualization
+   - Role-based access control (Admin, Analyst, Viewer)
+
+4. **Data Collector Service** (`football_collector`)
+   - Automated NFL data collection every 6 hours
+   - Background service for stats updates
+   - Independent operation from web app
+
+5. **Analytics Engine** (`football_analytics`)
+   - ML-powered correlation analysis every 12 hours
+   - Statistical significance testing (t-tests, p-values)
+   - "Dad strength" effect analysis
+   - Automated result storage
 
 ## Technology Stack
 
-- **Backend**: Python, Flask
-- **Database**: SQLite
-- **Frontend**: HTML, CSS, JavaScript
+### Core Technologies
+- **Backend**: Python 3.10, Flask 3.0
+- **Database**: PostgreSQL 15
+- **Cache**: Redis 7
+- **Orchestration**: Docker Compose
 - **Containerization**: Docker
-- **Data Visualization**: Chart.js / Plotly (or your specific library)
+
+### Data Analysis
+- **NFL Data**: nfl-data-py 0.3.2
+- **Analysis**: Pandas 2.1.4, NumPy 1.26.2
+- **Statistics**: SciPy 1.11.4, Scikit-learn 1.3.2
+
+### Security & Authentication
+- **Authentication**: Flask-Login 0.6.3
+- **Password Hashing**: Werkzeug 3.0.1
+- **ORM**: SQLAlchemy 2.0.23
+
+## Features
+
+### User Interface
+-  User authentication and role-based access control
+-  Player management dashboard
+-  Interactive analytics visualizations
+-  Team defense statistics tracking
+-  Audit logging system
+-  NFL data import via API
+
+### Background Services
+-  Automated data collection (every 6 hours)
+-  Automated correlation analysis (every 12 hours)
+-  Statistical significance testing
+-  Performance trend analysis
+
+### Analytics
+-  Correlation coefficient calculation
+-  T-test for statistical significance
+-  "Dad strength" phenomenon analysis
+-  Before/after life event performance comparison
 
 ## Installation & Setup
 
 ### Prerequisites
 
-- Docker installed on your system
+- Docker and Docker Compose installed
 - Git
+- 4GB+ RAM available
+- 10GB+ disk space
 
-### Running the Application
+### Quick Start
 
-1. Clone the repository:
+1. **Clone the repository**
 ```bash
 git clone https://github.com/Rojas003/football-analytics-platform.git
 cd football-analytics-platform
 ```
 
-2. Build and run the Docker container:
+2. **Start all containers**
 ```bash
-docker build -t football-analytics .
-docker run -p 5000:5000 football-analytics
+docker-compose up -d --build
 ```
 
-3. Access the application at `http://localhost:5000`
+3. **Verify all containers are running**
+```bash
+docker-compose ps
+```
+
+You should see 5 containers:
+- `football_db` (healthy)
+- `football_redis` (healthy)
+- `football_web` (up)
+- `football_collector` (up)
+- `football_analytics` (up)
+
+4. **Access the application**
+- Open browser: `http://localhost:5001`
+- Default login: `admin` / `admin123`
+
+### Database Initialization
+
+The database schema is automatically created on first startup. Tables include:
+- `users` - User accounts and authentication
+- `player` - NFL player information
+- `player_stats` - Game-by-game statistics
+- `life_event` - Personal life events
+- `correlation_analysis` - ML analysis results
+- `team_defense_stats` - Defensive statistics
+- `audit_log` - System audit trail
 
 ## Usage
 
-1. **Create an Account**: Register for a new account through the web interface
-2. **Add Players**: Input player information and statistics
-3. **Record Life Events**: Document personal life events for tracked players
-4. **View Analytics**: Access the dashboard to see correlation analysis and performance trends
-5. **Generate Reports**: Create visual reports showing the relationship between life events and performance
+### Adding Players
+1. Navigate to "Add Player" or "API Import"
+2. Search for NFL players by name
+3. Import player data and statistics
+
+### Recording Life Events
+1. Select a player
+2. Add life event (birth, marriage, injury, etc.)
+3. Specify event date and details
+
+### Viewing Analytics
+1. Navigate to "Analytics" dashboard
+2. View correlation analysis results
+3. Examine statistical significance
+4. Review "dad strength" effect findings
+
+### Background Services
+- **Data Collector**: Runs every 6 hours automatically
+- **Analytics Engine**: Runs every 12 hours automatically
+- Manual trigger: `docker-compose restart analytics`
+
+## Container Management
+
+### View Logs
+```bash
+# All containers
+docker-compose logs -f
+
+# Specific container
+docker-compose logs -f analytics
+```
+
+### Restart Services
+```bash
+# Restart specific service
+docker-compose restart web
+
+# Restart all
+docker-compose restart
+```
+
+### Stop/Start
+```bash
+# Stop all
+docker-compose down
+
+# Start all
+docker-compose up -d
+```
+
+### Database Access
+```bash
+# Connect to PostgreSQL
+docker-compose exec db psql -U football_user -d football_analytics
+
+# View tables
+\dt
+
+# Query data
+SELECT * FROM correlation_analysis;
+
+# Exit
+\q
+```
 
 ## Security Features
 
-- Secure user authentication and password hashing
-- Session management
-- Input validation and sanitization
-- SQL injection prevention
+-  Password hashing (Werkzeug)
+-  Role-based access control (Admin/Analyst/Viewer)
+-  Audit logging for all actions
+-  SQL injection prevention (SQLAlchemy ORM)
+-  Network isolation (Docker bridge network)
+-  Environment variable configuration
 
-## Future Development (Final Phase)
+## Project Requirements Met
 
-The final phase will implement a multi-container architecture including:
+This project fulfills requirements for weeks 9-12 of the course:
 
+### Weeks 9-10: Container Architecture 
+- Multi-container microservices design
 - Docker Compose orchestration
-- PostgreSQL database
-- Automated data collection container
-- Advanced machine learning analytics engine
-- Redis cache for session management
-- Enhanced security features (AES-256 encryption, MFA, RBAC)
-- Integration with live sports data APIs
+- 5 specialized containers
+- Network isolation
+- Health checks and monitoring
 
-## Project Goals
+### Weeks 11-12: Advanced Analytics 
+- Machine learning integration
+- Statistical correlation analysis
+- Automated background processing
+- Real-time data collection
 
-- Challenge assumptions about performance analysis in sports
-- Provide data-driven insights into the "dad strength" phenomenon
-- Create tools for fantasy football players, sports analysts, and researchers
-- Demonstrate real-world application of containerization and security principles
+## Architecture Highlights
 
-## Documentation
+- **Microservices Design**: Each container has a single responsibility
+- **Scalability**: Containers can be scaled independently
+- **Resilience**: Auto-restart policies and health checks
+- **Maintainability**: Clear separation of concerns
+- **Production-Ready**: Proper orchestration and monitoring
 
-Comprehensive documentation including system architecture, deployment guides, and user manuals will be provided in the final submission.
+## Development
+
+### Environment Configuration
+Copy `.env.example` to `.env` and configure:
+- Database credentials
+- Redis password
+- API keys
+- Secret keys
+
+### Adding Features
+1. Web features: Modify `app/main.py`
+2. Data collection: Update `collector_service.py`
+3. Analytics: Modify `analytics_service.py`
+
+### Testing
+- Manual testing via web interface
+- Container health: `docker-compose ps`
+- Logs: `docker-compose logs [service]`
+
+## Future Enhancements
+
+- Cloud deployment (AWS/Digital Ocean)
+- Advanced security (MFA, SSL/TLS)
+- Monitoring and alerting
+- Horizontal scaling with load balancing
+- Comprehensive automated testing
+
+## Research Goals
+
+This platform investigates:
+- Correlation between personal life events and athletic performance
+- "Dad strength" phenomenon in professional sports
+- Impact of various life circumstances on player statistics
+- Predictive modeling for fantasy football and sports betting
 
 ## Author
 
-Sherry Rojas
+**Sherry Rojas**  
+Master's Student in Information Security, NJIT
 
 ## Acknowledgments
 
-This project was developed as part of a server management and information security course, with AI assistance from Claude (Anthropic) for technical structure and formatting.
+- Course: IT 610/620 - Server Management and Information Security
+- NFL Data: nfl-data-py open source library
+- AI Assistance: Claude (Anthropic) for technical architecture and documentation
+- Inspiration: Analysis of "dad strength" effect in MLB
 
 ## License
 
-This project is for educational purposes.
+This project is for educational purposes as part of graduate coursework at NJIT.
+
+---
+
+## Quick Reference
+
+### Common Commands
+```bash
+# Start everything
+docker-compose up -d
+
+# Stop everything
+docker-compose down
+
+# View status
+docker-compose ps
+
+# View logs
+docker-compose logs -f [service]
+
+# Rebuild after changes
+docker-compose up -d --build [service]
+
+# Access database
+docker-compose exec db psql -U football_user -d football_analytics
+
+# Trigger analytics
+docker-compose restart analytics
+```
+
+### Access Points
+- **Web App**: http://localhost:5001
+- **Database**: localhost:5432
+- **Redis**: localhost:6379
+
+### Default Credentials
+- **Username**: admin
+- **Password**: admin123
+- **Role**: Administrator
+
+---
+
+**Note**: This is a containerized microservices application. Ensure Docker and Docker Compose are properly installed before running.
