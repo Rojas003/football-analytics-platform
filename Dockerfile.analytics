@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-analytics.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-analytics.txt
+
+# Note: analytics_service.py is mounted as a volume
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run the analytics service
+CMD ["python", "-u", "analytics_service.py"]

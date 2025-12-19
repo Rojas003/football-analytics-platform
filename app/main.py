@@ -5,15 +5,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from functools import wraps
 import os
-from data_collector import NFLDataCollector, test_nfl_data_connection
+from app.data_collector import NFLDataCollector, test_nfl_data_connection
 from dotenv import load_dotenv
-
+# import redis
+# from flask_session import Session
 load_dotenv()
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////app/data/football_analytics.db'
+
+# Database configuration - supports both SQLite (dev) and PostgreSQL (production)
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:////app/data/football_analytics.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# # Redis session configuration
+# app.config['SESSION_TYPE'] = 'redis'
+# REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+# app.config['SESSION_REDIS'] = redis.from_url(REDIS_URL, decode_responses=True)
+# app.config['SESSION_PERMANENT'] = False
+# app.config['SESSION_USE_SIGNER'] = True
+# Session(app)
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()

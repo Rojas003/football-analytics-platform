@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements-collector.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-collector.txt
+
+# Copy application code
+# Note: collector_service.py is mounted as a volume
+# and defines its own models
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run the collector service
+CMD ["python", "-u", "data_collector.py"]

@@ -1,18 +1,105 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    container_name: football-analytics-app
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: football_db
+    environment:
+      POSTGRES_DB: football_analytics
+      POSTGRES_USER: football_user
+      POSTGRES_PASSWORD: football_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
-      - "8080:5000"
+      - "5432:5432"
+    networks:
+      - football_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football_user -d football_analytics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis Cache/Security
+  redis:
+    image: redis:7-alpine
+    container_name: football_redis
+    command: redis-server --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - football_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. Flask Web Application
+  web:
+    build: .
+    container_name: football_web
+    ports:
+      - "5001:5000"
+    environment:
+      - DATABASE_URL=postgresql://football_user:football_pass@db:5432/football_analytics
+      - REDIS_URL=redis://:redis_password@redis:6379/0
+      - FLASK_ENV=development
+      - SECRET_KEY=your-secret-key-change-this
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./app:/app/app
       - ./templates:/app/templates
       - ./static:/app/static
       - ./data:/app/data
+    networks:
+      - football_network
+
+  # 4. Data Collection Service
+  collector:
+    build:
+      context: .
+      dockerfile: Dockerfile.collector
+    container_name: football_collector
     environment:
-      - FLASK_APP=app/main.py
-      - FLASK_ENV=development
-      - SECRET_KEY=change-this-to-a-random-secret-key-in-production
+      - DATABASE_URL=postgresql://football_user:football_pass@db:5432/football_analytics
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./collector_service.py:/app/data_collector.py
+    networks:
+      - football_network
     restart: unless-stopped
+
+  # 5. Analytics Engine
+  analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile.analytics
+    container_name: football_analytics
+    environment:
+      - DATABASE_URL=postgresql://football_user:football_pass@db:5432/football_analytics
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./analytics_service.py:/app/analytics_service.py
+    networks:
+      - football_network
+    restart: unless-stopped
+
+networks:
+  football_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
